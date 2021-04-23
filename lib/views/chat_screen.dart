@@ -1,4 +1,5 @@
 import 'package:chat_demo/Utils/global_values.dart';
+import 'package:chat_demo/Utils/socket.dart';
 import 'package:chat_demo/models/chat_message_model.dart';
 import 'package:chat_demo/models/user_model.dart';
 import 'package:chat_demo/widget/chat_title_widget.dart';
@@ -21,6 +22,15 @@ class _ChatScreenState extends State<ChatScreen> {
     _pairedUser = GlobalValues.pairedWithUser;
     status = UserOnlineStatus.connecting;
     _chatTextFieldController = TextEditingController();
+    initMessageReceiveListner();
+  }
+
+  initMessageReceiveListner() {
+    GlobalValues.socketUtils.onChatMessageReceiveListner(onMessageReceived);
+  }
+
+  onMessageReceived(data) {
+    print("OnMessageReceived: $data");
   }
 
   @override
@@ -68,12 +78,27 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: Icon(Icons.send),
             onPressed: () async {
-              // _sendButtonTap();
+              sendMessageFunction();
             },
           ),
         ],
       ),
     );
+  }
+
+  sendMessageFunction() {
+    print("Sending message to ${_pairedUser.name}, id:${_pairedUser.id} ");
+
+    if (_chatTextFieldController.text.isNotEmpty) {
+      ChatMessageModel chatMessageModel = ChatMessageModel(
+          chatId: 0,
+          senderId: GlobalValues.loggedInUser.id,
+          receiverId: _pairedUser.id,
+          message: _chatTextFieldController.text,
+          chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
+          toUserOnlineStatus: false);
+      GlobalValues.socketUtils.sendChatMessage(chatMessageModel);
+    }
   }
 
   _chatTextArea() {

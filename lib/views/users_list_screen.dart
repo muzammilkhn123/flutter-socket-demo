@@ -22,7 +22,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
     _connectToSocket();
   }
 
-  _connectToSocket()async {
+  _connectToSocket() async {
     Future.delayed(Duration(seconds: 2), () async {
       print(
           "Connecting Logged In User: ${GlobalValues.loggedInUser.name}, ID: ${GlobalValues.loggedInUser.id}");
@@ -38,9 +38,11 @@ class _UsersListScreenState extends State<UsersListScreen> {
 
   onConnect(data) {
     print('Connected $data');
-    setState(() {
-      _isSocketConnected = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isSocketConnected = true;
+      });
+    }
   }
 
   onConnectError(data) {
@@ -69,10 +71,13 @@ class _UsersListScreenState extends State<UsersListScreen> {
 
   onDisconnect(data) {
     print('onDisconnect $data');
-    setState(() {
-      _isSocketConnected = false;
-      _connectMessage = 'Disconnected';
-    });
+    if (mounted) {
+      setState(() {
+        _isSocketConnected = false;
+        _connectMessage = 'Disconnected';
+      });
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -83,7 +88,10 @@ class _UsersListScreenState extends State<UsersListScreen> {
         leading: Container(),
         actions: [
           IconButton(
-              icon: Icon(Icons.logout), onPressed: () => Navigator.pop(context))
+              icon: Icon(Icons.logout),
+              onPressed: () {
+                GlobalValues.socketUtils. closeConnection();
+              })
         ],
       ),
       body: Container(

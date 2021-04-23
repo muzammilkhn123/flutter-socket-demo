@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:chat_demo/models/chat_message_model.dart';
 import 'package:chat_demo/models/user_model.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -9,13 +10,14 @@ class SocketUtils {
       Platform.isIOS ? "http://localhost" : "http://10.0.2.2";
   static const int SERVER_PORT = 3000;
   static String _url = "$_serverIP:$SERVER_PORT";
-
+  static String _hrokuURL = "https://socket-server-trial.herokuapp.com";
   // Events
   static const String ON_MESSAGE_RECEIVED = 'receive_message';
   static const String SUB_EVENT_MESSAGE_SENT = 'message_sent_to_user';
   static const String IS_USER_CONNECTED_EVENT = 'is_user_connected';
   static const String IS_USER_ONLINE_EVENT = 'check_online';
   static const String SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
+  static const EVENT_SINGLE_CHAT_MESSAGE = "single_chat_message";
 
   // Status
   static const int STATUS_MESSAGE_NOT_SENT = 10001;
@@ -24,28 +26,26 @@ class SocketUtils {
   static const int STATUS_MESSAGE_READ = 10004;
 
   initSocket(User fromUser) async {
-    print('Connecting user: ${fromUser.name}');
-    this._fromUser = fromUser;
+    print('Connecting user: ${fromUser.id}');
+    _fromUser = fromUser;
     await _init();
   }
 
   IO.Socket _socket;
   _init() async {
-    _socket = IO.io(_url, _socketOptions());
+    if (_socket == null) {
+      _socket = IO.io(_url, _socketOptions());
+    } else {
+      _socket.opts["query"] = "from=${_fromUser.id}";
+    }
   }
 
   _socketOptions() {
-    final Map<String, String> userMap = {
-      'from': _fromUser.id.toString(),
-    };
-    return IO.OptionBuilder()
+    return new IO.OptionBuilder()
         .setTransports(['websocket'])
-        .setQuery(userMap)
-        .build(); // for Flutter or Dart VM
-    // _connectUrl,
-    // enableLogging: true,
-    // transports: [Transports.WEB_SOCKET],
-    // query: userMap,
+        .setQuery({"from": _fromUser.id})
+        .disableAutoConnect()
+        .build();
   }
 
   connectToSocket() {
@@ -93,5 +93,21 @@ class SocketUtils {
       print("Close Connection");
       _socket.io.disconnect();
     }
+  }
+
+  sendChatMessage(
+    ChatMessageModel chatMessageModel,
+  ) {
+    if (_socket == null) {
+      print("Cannot Send Message");
+      return;
+    }
+    _socket.emit(EVENT_SINGLE_CHAT_MESSAGE, [chatMessageModel.toJson()]);
+  }
+
+  onChatMessageReceiveListner(Function onMessageReceived) {
+    _socket.on(ON_MESSAGE_RECEIVED, (data) {
+      onMessageReceived(data);
+    });
   }
 }
