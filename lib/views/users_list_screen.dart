@@ -90,7 +90,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
           IconButton(
               icon: Icon(Icons.logout),
               onPressed: () {
-                GlobalValues.socketUtils. closeConnection();
+                GlobalValues.socketUtils.closeConnection();
               })
         ],
       ),

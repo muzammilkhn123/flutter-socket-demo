@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:chat_demo/Utils/global_values.dart';
 import 'package:chat_demo/Utils/socket.dart';
 import 'package:chat_demo/models/chat_message_model.dart';
@@ -12,13 +14,13 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   TextEditingController _chatTextFieldController;
-  List<ChatMessageModel> chatMessagesList;
+  List<ChatMessageModel> _chatMessagesList;
   UserOnlineStatus status;
   User _pairedUser;
   @override
   void initState() {
     super.initState();
-    chatMessagesList = List();
+    _chatMessagesList = List();
     _pairedUser = GlobalValues.pairedWithUser;
     status = UserOnlineStatus.connecting;
     _chatTextFieldController = TextEditingController();
@@ -31,6 +33,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   onMessageReceived(data) {
     print("OnMessageReceived: $data");
+    ChatMessageModel chatMessageModel =
+        ChatMessageModel.fromJson(json.decode(data));
+
+    setState(() {
+      _chatMessagesList.add(chatMessageModel);
+    });
   }
 
   @override
@@ -63,9 +71,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 reverse: false,
                 shrinkWrap: true,
                 padding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-                itemCount: chatMessagesList.length,
+                itemCount: _chatMessagesList.length,
                 itemBuilder: (context, index) {
-                  return Text(chatMessagesList[index].message);
+                  return Text(_chatMessagesList[index].message);
                 })));
   }
 
@@ -98,6 +106,10 @@ class _ChatScreenState extends State<ChatScreen> {
           chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
           toUserOnlineStatus: false);
       GlobalValues.socketUtils.sendChatMessage(chatMessageModel);
+      setState(() {
+        _chatTextFieldController.text = "";
+        _chatMessagesList.add(chatMessageModel);
+      });
     }
   }
 
