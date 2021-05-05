@@ -17,6 +17,14 @@ class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessageModel> _chatMessagesList;
   UserOnlineStatus status;
   User _pairedUser;
+
+  @override
+  void setState(fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -25,17 +33,49 @@ class _ChatScreenState extends State<ChatScreen> {
     status = UserOnlineStatus.connecting;
     _chatTextFieldController = TextEditingController();
     initMessageReceiveListner();
+    initOnlineStatusListner();
+    _checkOnline();
   }
 
   initMessageReceiveListner() {
     GlobalValues.socketUtils.onChatMessageReceiveListner(onMessageReceived);
   }
 
+  initOnlineStatusListner() {
+    GlobalValues.socketUtils.setOnlineUserStatus(onUserStatus);
+  }
+
+  onUserStatus(data) {
+    print("onUserStatus: $data");
+    ChatMessageModel chatMessageModel =
+        ChatMessageModel.fromJson(json.decode(data));
+
+    status = chatMessageModel.toUserOnlineStatus
+        ? UserOnlineStatus.online
+        : UserOnlineStatus.offline;
+    setState(() {
+      status = chatMessageModel.toUserOnlineStatus
+          ? UserOnlineStatus.online
+          : UserOnlineStatus.offline;
+    });
+  }
+
+  _checkOnline() {
+    ChatMessageModel chatMessageModel = ChatMessageModel(
+        chatId: 0,
+        senderId: GlobalValues.loggedInUser.id,
+        receiverId: _pairedUser.id,
+        message: "",
+        chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
+        toUserOnlineStatus: false);
+    GlobalValues.socketUtils.checkOnline(chatMessageModel);
+  }
+
   onMessageReceived(data) {
     print("OnMessageReceived: $data");
     ChatMessageModel chatMessageModel =
         ChatMessageModel.fromJson(json.decode(data));
-
+    chatMessageModel.isFromMe = false;
     setState(() {
       _chatMessagesList.add(chatMessageModel);
     });
@@ -73,7 +113,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
                 itemCount: _chatMessagesList.length,
                 itemBuilder: (context, index) {
-                  return Text(_chatMessagesList[index].message);
+                  return Align(
+                      alignment: _chatMessagesList[index].isFromMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Text(_chatMessagesList[index].message));
                 })));
   }
 
@@ -104,7 +148,8 @@ class _ChatScreenState extends State<ChatScreen> {
           receiverId: _pairedUser.id,
           message: _chatTextFieldController.text,
           chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
-          toUserOnlineStatus: false);
+          toUserOnlineStatus: false,
+          isFromMe: true);
       GlobalValues.socketUtils.sendChatMessage(chatMessageModel);
       setState(() {
         _chatTextFieldController.text = "";

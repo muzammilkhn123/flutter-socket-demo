@@ -7,14 +7,14 @@ String chatMessageModelToJson(ChatMessageModel data) =>
     json.encode(data.toJson());
 
 class ChatMessageModel {
-  ChatMessageModel({
-    this.chatId,
-    this.senderId,
-    this.receiverId,
-    this.message,
-    this.chatRoomType,
-    this.toUserOnlineStatus,
-  });
+  ChatMessageModel(
+      {this.chatId,
+      this.senderId,
+      this.receiverId,
+      this.message,
+      this.chatRoomType,
+      this.toUserOnlineStatus,
+      this.isFromMe });
 
   int chatId;
   int senderId;
@@ -22,6 +22,7 @@ class ChatMessageModel {
   String message;
   String chatRoomType;
   bool toUserOnlineStatus;
+  bool isFromMe;
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) =>
       ChatMessageModel(

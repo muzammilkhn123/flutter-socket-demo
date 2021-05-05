@@ -97,7 +97,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
       body: Container(
         color: Colors.white,
         alignment: Alignment.center,
-        padding: EdgeInsets.all(30.0),
+        padding: EdgeInsets.all(30.0),  
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[

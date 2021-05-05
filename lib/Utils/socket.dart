@@ -110,5 +110,20 @@ class SocketUtils {
       onMessageReceived(data);
     });
   }
+
+  checkOnline(ChatMessageModel chatMessage) {
+    print("Checking Online User: " + chatMessage.receiverId.toString());
+    if (_socket == null) {
+      print("Cannot Check Online");
+      return;
+    }
+    _socket.emit(IS_USER_ONLINE_EVENT, [chatMessage.toJson()]);
+  }
+
+  setOnlineUserStatus(Function onUserStatus) {
+    _socket.on(IS_USER_CONNECTED_EVENT, (data) {
+      print(data);
+      onUserStatus(data);
+    });
+  }
 }
-    
