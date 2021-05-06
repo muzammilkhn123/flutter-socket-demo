@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:chat_demo/models/chat_message_model.dart';
+import 'package:chat_demo/models/is_typing_model.dart';
 import 'package:chat_demo/models/user_model.dart';
+import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketUtils {
@@ -18,7 +20,8 @@ class SocketUtils {
   static const String IS_USER_ONLINE_EVENT = 'check_online';
   static const String SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
   static const EVENT_SINGLE_CHAT_MESSAGE = "single_chat_message";
-
+  static const EVENT_SEND_TYPING = "send_typing";
+  static const EVENT_RECEIVED_TYPING = "received_typing";
   // Status
   static const int STATUS_MESSAGE_NOT_SENT = 10001;
   static const int STATUS_MESSAGE_SENT = 10002;
@@ -105,9 +108,28 @@ class SocketUtils {
     _socket.emit(EVENT_SINGLE_CHAT_MESSAGE, [chatMessageModel.toJson()]);
   }
 
+  sendIsTyping(
+      {@required bool isTyping,
+      @required int senderID,
+      @required int receiverID}) {
+    if (_socket == null) {
+      print("Cannot Send Message");
+      return;
+    }
+    IsTypingModel isTypingModel = IsTypingModel(
+        isTyping: isTyping, receiverID: receiverID, senderID: senderID);
+    _socket.emit(EVENT_SEND_TYPING, [isTypingModel.toJson()]);
+  }
+
   onChatMessageReceiveListner(Function onMessageReceived) {
     _socket.on(ON_MESSAGE_RECEIVED, (data) {
       onMessageReceived(data);
+    });
+  }
+
+  onTypingReceiveListner(Function onTypingReceived) {
+    _socket.on(EVENT_RECEIVED_TYPING, (data) {
+      onTypingReceived(data);
     });
   }
 

@@ -83,67 +83,44 @@ class _UsersListScreenState extends State<UsersListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Users List'),
-        leading: Container(),
-        actions: [
-          IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: () {
-                GlobalValues.socketUtils.closeConnection();
-              })
-        ],
-      ),
-      body: Container(
-        color: Colors.white,
-        alignment: Alignment.center,
-        padding: EdgeInsets.all(30.0),  
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(_isSocketConnected ? 'Connected' : _connectMessage),
-            SizedBox(
-              height: 20.0,
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: usersForChat.length,
-                itemBuilder: (_, index) {
-                  User user = usersForChat[index];
-                  return GestureDetector(
-                    onTap: () {
-                      GlobalValues.pairedWithUser = user;
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ChatScreen()));
-                    },
-                    child: ListTile(
-                      title: Text(user.name),
-                      subtitle: Text('ID: ${user.id}, ${user.email}'),
-                    ),
-                  );
-                },
-              ),
-            ),
+        appBar: AppBar(
+          title: Text('Users List'),
+          leading: Container(),
+          actions: [
+            IconButton(
+                icon: Icon(Icons.logout),
+                onPressed: () {
+                  GlobalValues.socketUtils.closeConnection();
+                })
           ],
         ),
-      ),
-      // ListView.builder(
-      //   itemCount: usersForChat.length,
-      //   itemBuilder: (context, index) {
-      //     return ListTile(
-      //       onTap: () {
-      //         GlobalValues.pairedWithUser = usersForChat[index];
-      //         Navigator.push(context,
-      //             MaterialPageRoute(builder: (context) => ChatScreen()));
-      //       },
-      //       title: Text(usersForChat[index].name),
-      //       subtitle: Text(
-      //           'ID: ${usersForChat[index].id}, ${usersForChat[index].email}'),
-      //     );
-      //   },
-      // )
-    );
+        body: Container(
+            color: Colors.white,
+            alignment: Alignment.center,
+            padding: EdgeInsets.all(30.0),
+            child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+              Text(_isSocketConnected ? 'Connected' : _connectMessage),
+              SizedBox(
+                height: 20.0,
+              ),
+              Expanded(
+                  child: ListView.builder(
+                      itemCount: usersForChat.length,
+                      itemBuilder: (_, index) {
+                        User user = usersForChat[index];
+                        return GestureDetector(
+                            onTap: () {
+                              GlobalValues.pairedWithUser = user;
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ChatScreen()));
+                            },
+                            child: ListTile(
+                                title: Text(user.name),
+                                subtitle:
+                                    Text('ID: ${user.id}, ${user.email}')));
+                      }))
+            ])));
   }
 }
