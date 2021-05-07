@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-ChatMessageModel chatMessageModelFromJson(String str) =>
+  ChatMessageModel chatMessageModelFromJson(String str) =>
     ChatMessageModel.fromJson(json.decode(str));
 
 String chatMessageModelToJson(ChatMessageModel data) =>
@@ -14,7 +14,8 @@ class ChatMessageModel {
       this.message,
       this.chatRoomType,
       this.toUserOnlineStatus,
-      this.isFromMe });
+      this.isFromMe,
+      this.isPicture});
 
   int chatId;
   int senderId;
@@ -23,16 +24,16 @@ class ChatMessageModel {
   String chatRoomType;
   bool toUserOnlineStatus;
   bool isFromMe;
-
+  bool isPicture;
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) =>
       ChatMessageModel(
-        chatId: json["chatID"],
-        senderId: json["senderID"],
-        receiverId: json["ReceiverID"],
-        message: json["message"],
-        chatRoomType: json["chatRoomType"],
-        toUserOnlineStatus: json["to_user_online_status"],
-      );
+          chatId: json["chatID"],
+          senderId: json["senderID"],
+          receiverId: json["ReceiverID"],
+          message: json["message"],
+          chatRoomType: json["chatRoomType"],
+          toUserOnlineStatus: json["to_user_online_status"],
+          isPicture: json["isPicture"]);
 
   Map<String, dynamic> toJson() => {
         "chatID": chatId,
@@ -41,5 +42,6 @@ class ChatMessageModel {
         "message": message,
         "chatRoomType": chatRoomType,
         "to_user_online_status": toUserOnlineStatus,
+        "isPicture": isPicture,
       };
 }

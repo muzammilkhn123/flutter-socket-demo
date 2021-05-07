@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 
 enum UserOnlineStatus { online, offline, connecting }
 
-class ChatTitle extends StatelessWidget {
+ChatTitleState chatTitleState;
+
+class ChatTitle extends StatefulWidget {
   const ChatTitle(
       {Key key,
       @required this.chatUser,
@@ -14,13 +16,21 @@ class ChatTitle extends StatelessWidget {
   final User chatUser;
   final UserOnlineStatus userOnlineStatus;
   final bool isTyping;
+
+  @override
+  ChatTitleState createState() => ChatTitleState();
+}
+
+class ChatTitleState extends State<ChatTitle> {
+  static bool isTyping = false;
   @override
   Widget build(BuildContext context) {
+    chatTitleState = this;
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(chatUser.name),
+          Text(widget.chatUser.name),
           Text(
             isTyping ? "typing..." : _getStatusText(),
             style: TextStyle(
@@ -34,13 +44,13 @@ class ChatTitle extends StatelessWidget {
   }
 
   _getStatusText() {
-    if (userOnlineStatus == UserOnlineStatus.connecting) {
+    if (widget.userOnlineStatus == UserOnlineStatus.connecting) {
       return 'connecting...';
     }
-    if (userOnlineStatus == UserOnlineStatus.online) {
+    if (widget.userOnlineStatus == UserOnlineStatus.online) {
       return 'online';
     }
-    if (userOnlineStatus == UserOnlineStatus.offline) {
+    if (widget.userOnlineStatus == UserOnlineStatus.offline) {
       return 'offline';
     }
   }

@@ -27,6 +27,8 @@ dependencies:
   cupertino_icons: ^1.0.0
   socket_io_client: ^0.9.12
   socket_io: any
+  image_picker: any
+  flutter_chat_bubble: ^1.0.2
   
 dev_dependencies:
   flutter_test:

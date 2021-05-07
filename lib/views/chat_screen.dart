@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:chat_demo/Utils/global_values.dart';
 import 'package:chat_demo/Utils/socket.dart';
@@ -7,8 +8,11 @@ import 'package:chat_demo/models/chat_message_model.dart';
 import 'package:chat_demo/models/is_typing_model.dart';
 import 'package:chat_demo/models/user_model.dart';
 import 'package:chat_demo/widget/chat_title_widget.dart';
-import 'package:chat_demo/widget/custom_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_bubble/bubble_type.dart';
+import 'package:flutter_chat_bubble/chat_bubble.dart';
+import 'package:flutter_chat_bubble/clippers/chat_bubble_clipper_3.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -68,7 +72,8 @@ class _ChatScreenState extends State<ChatScreen> {
         receiverId: _pairedUser.id,
         message: "",
         chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
-        toUserOnlineStatus: false);
+        toUserOnlineStatus: false,
+        isPicture: false);
     GlobalValues.socketUtils.checkOnline(chatMessageModel);
   }
 
@@ -90,7 +95,8 @@ class _ChatScreenState extends State<ChatScreen> {
     } else {
       _isotherUserTyping = false;
     }
-    setState(() {});
+    ChatTitleState.isTyping = _isotherUserTyping;
+    chatTitleState.setState(() {});
   }
 
   @override
@@ -126,40 +132,67 @@ class _ChatScreenState extends State<ChatScreen> {
                 // controller: _chatLVController,
                 reverse: false,
                 shrinkWrap: true,
-                padding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+                padding: EdgeInsets.fromLTRB(0, 10.0, 0, 10.0),
                 itemCount: _chatMessagesList.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    width: 20,
-                    margin: EdgeInsets.only(bottom: 10),
-                    child: CustomPaint(
-                        painter: CustomChatBubble(
-                            color: _chatMessagesList[index].isFromMe
-                                ? Colors.green[400]
-                                : Colors.grey[300],
-                            isOwn: _chatMessagesList[index].isFromMe),
+                  if (!_chatMessagesList[index].isPicture) {
+                    return ChatBubble(
+                      clipper: ChatBubbleClipper3(
+                          type: _chatMessagesList[index].isFromMe
+                              ? BubbleType.sendBubble
+                              : BubbleType.receiverBubble),
+                      alignment: _chatMessagesList[index].isFromMe
+                          ? Alignment.topRight
+                          : Alignment.topLeft,
+                      margin: EdgeInsets.only(top: 20),
+                      backGroundColor: _chatMessagesList[index].isFromMe
+                          ? Colors.green[400]
+                          : Color(0xffE7E7ED),
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.5,
+                        ),
+                        child: Text(
+                          _chatMessagesList[index].message,
+                          style: TextStyle(
+                              color: _chatMessagesList[index].isFromMe
+                                  ? Colors.white
+                                  : Colors.black),
+                        ),
+                      ),
+                    );
+                  } else {
+                    const Base64Codec base64 = Base64Codec();
+                    if (_chatMessagesList[index].message == null)
+                      return new Container();
+                    final bytes =
+                        base64.decode(_chatMessagesList[index].message);
+
+                    return ChatBubble(
+                        clipper: ChatBubbleClipper3(
+                            type: _chatMessagesList[index].isFromMe
+                                ? BubbleType.sendBubble
+                                : BubbleType.receiverBubble),
+                        alignment: _chatMessagesList[index].isFromMe
+                            ? Alignment.topRight
+                            : Alignment.topLeft,
+                        margin: EdgeInsets.only(top: 20),
+                        backGroundColor: _chatMessagesList[index].isFromMe
+                            ? Colors.green[400]
+                            : Color(0xffE7E7ED),
                         child: Container(
-                            width: 20,
-                            padding: EdgeInsets.all(8),
-                            child: Text(
-                              _chatMessagesList[index].message,
-                              textAlign: _chatMessagesList[index].isFromMe
-                                  ? TextAlign.right
-                                  : TextAlign.left,
-                              style: TextStyle(
-                                  color: _chatMessagesList[index].isFromMe
-                                      ? Colors.white
-                                      : Colors.black),
-                            ))),
-                  );
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.5,
+                            ),
+                            child: Image.memory(bytes, height: 200)));
+                  }
                 })));
   }
 
   _bottomChatArea() {
     return Container(
-      padding: EdgeInsets.all(10.0),
-      child: Row(
-        children: <Widget>[
+        padding: EdgeInsets.all(10.0),
+        child: Row(children: <Widget>[
           _chatTextArea(),
           IconButton(
             icon: Icon(Icons.send),
@@ -167,9 +200,13 @@ class _ChatScreenState extends State<ChatScreen> {
               sendMessageFunction();
             },
           ),
-        ],
-      ),
-    );
+          IconButton(
+              icon: Icon(Icons.add_photo_alternate),
+              onPressed: () {
+                _showPicker();
+                print("ancd");
+              })
+        ]));
   }
 
   sendMessageFunction() {
@@ -183,6 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
           message: _chatTextFieldController.text,
           chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
           toUserOnlineStatus: false,
+          isPicture: false,
           isFromMe: true);
       GlobalValues.socketUtils.sendChatMessage(chatMessageModel);
       setState(() {
@@ -231,5 +269,87 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  _imgFromCamera() async {
+    PickedFile image = await ImagePicker()
+        .getImage(source: ImageSource.camera, imageQuality: 50);
+
+    File selected = File(image.path);
+
+    if (selected != null) {
+      List<int> imageBytes = selected.readAsBytesSync();
+      print(imageBytes);
+      String base64Image = base64Encode(imageBytes);
+      ChatMessageModel chatMessageModel = ChatMessageModel(
+          chatId: 0,
+          senderId: GlobalValues.loggedInUser.id,
+          receiverId: _pairedUser.id,
+          message: base64Image,
+          chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
+          toUserOnlineStatus: false,
+          isPicture: true,
+          isFromMe: true);
+
+      GlobalValues.socketUtils.sendChatMessage(chatMessageModel);
+      setState(() {
+        _chatMessagesList.add(chatMessageModel);
+      });
+    }
+  }
+
+  _imgFromGallery() async {
+    PickedFile image = await ImagePicker()
+        .getImage(source: ImageSource.gallery, imageQuality: 50);
+    File selected = File(image.path);
+    if (selected != null) {
+      List<int> imageBytes = selected.readAsBytesSync();
+      print(imageBytes);
+      String base64Image = base64Encode(imageBytes);
+      ChatMessageModel chatMessageModel = ChatMessageModel(
+          chatId: 0,
+          senderId: GlobalValues.loggedInUser.id,
+          receiverId: _pairedUser.id,
+          message: base64Image,
+          chatRoomType: SocketUtils.EVENT_SINGLE_CHAT_MESSAGE,
+          toUserOnlineStatus: false,
+          isPicture: true,
+          isFromMe: true);
+
+      GlobalValues.socketUtils.sendChatMessage(chatMessageModel);
+      setState(() {
+        _chatMessagesList.add(chatMessageModel);
+      });
+    }
+  }
+
+  void _showPicker() {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return SafeArea(
+            child: Container(
+              child: new Wrap(
+                children: <Widget>[
+                  new ListTile(
+                      leading: new Icon(Icons.photo_library),
+                      title: new Text('Photo Library'),
+                      onTap: () {
+                        _imgFromGallery();
+                        Navigator.of(context).pop();
+                      }),
+                  new ListTile(
+                    leading: new Icon(Icons.photo_camera),
+                    title: new Text('Camera'),
+                    onTap: () {
+                      _imgFromCamera();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
   }
 }
